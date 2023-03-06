@@ -1,40 +1,28 @@
 // DEPENDENCIES
-import { useEffect, useState } from "react";
+import { useEffect, useContext } from "react";
+import GithubContext from "../../context/github/githubContext";
 
-//MODELS
-import User from "../models/githubUser";
+//COMPONENTS
+import Spinner from "../layaout/Spinner";
+import UserItem from "./UserItem";
 
 function UserResults() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const {users, loading, fetchUsers} = useContext(GithubContext)
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    const response = await fetch(`${process.env.REACT_APP_GITHUB_URL}/users`, {
-      headers: {
-        Authorization: `token ${process.env.REACT_APP_GITHUB_TOKEN}`,
-      },
-    });
-
-    const data = await response.json();
-
-    setUsers(data);
-    setLoading(false);
-  };
+    fetchUsers()
+  },[])
 
   if (!loading) {
     return (
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2">
         {users.map((user) => {
-          return <h3>{user.login}</h3>;
+          return <UserItem key={user.id} userData={user} />;
         })}
       </div>
     );
   } else {
-    return <h3>Loading...</h3>
+    return <Spinner />
   }
 }
 export default UserResults;
