@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext, useReducer } from "react";
+import githubReducer from "./githubReducer";
 
 //MODELS
 import User from "../../components/models/githubUser";
@@ -6,7 +7,8 @@ import User from "../../components/models/githubUser";
 type GithubContextTypes = {
   users: User[];
   loading: boolean
-  fetchUsers: () => void
+  searchUsers: (text: string) => void
+  clearUsers: () => void
 }
 
 const GithubContext = createContext({} as GithubContextTypes);
@@ -19,28 +21,56 @@ interface GithubContextProps {
 }
 
 export const GithubProvider = ({ children }: GithubContextProps) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // const [users, setUsers] = useState<User[]>([]);
+  // const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchUsers = async () => {
-    const response = await fetch(`${GITHUB_URL}/users`, {
+  const initialState = {
+    users: [],
+    loading: false
+  }
+
+  const [state, dispatch] = useReducer(githubReducer, initialState)
+
+
+  //GET SEARCH RESLT
+  const searchUsers = async (text: string) => {
+    setLoading()
+
+    const params = new URLSearchParams({
+      q: text
+    })
+
+    const response = await fetch(`${GITHUB_URL}/search/users?${params}`, {
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
       },
     });
 
-    const data = await response.json();
+    const {items} = await response.json();
 
-    setUsers(data);
-    setLoading(false);
+    // setUsers(data);
+    // setLoading(false);
+
+    dispatch({
+      type: "GET_USERS",
+      payload: items
+    })
   };
+
+  //SET LOADING
+  const setLoading = () => dispatch({type: "SET_LOADING", payload: []})
+
+  //CLEAR USERS
+
+  const clearUsers = () => dispatch({type: "CLEAR_USERS", payload: []})
 
   return (
     <GithubContext.Provider
       value={{
-        users,
-        loading,
-        fetchUsers
+        users: state.users,
+        loading: state.loading,
+        searchUsers,
+        clearUsers
       }}
     >
       {children}
