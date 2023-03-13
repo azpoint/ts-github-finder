@@ -6,8 +6,10 @@ import User from "../../components/models/githubUser";
 
 type GithubContextTypes = {
   users: User[];
+  user: object
   loading: boolean
   searchUsers: (text: string) => void
+  getUser: (login: string) => void
   clearUsers: () => void
 }
 
@@ -26,6 +28,7 @@ export const GithubProvider = ({ children }: GithubContextProps) => {
 
   const initialState = {
     users: [],
+    user: {},
     loading: false
   }
 
@@ -57,6 +60,31 @@ export const GithubProvider = ({ children }: GithubContextProps) => {
     })
   };
 
+  const getUser = async (login: string) => {
+    setLoading()
+
+        const response = await fetch(`${GITHUB_URL}/users/${login}`, {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+      },
+    });
+    
+    if(response.status === 404) {
+      window.location.href = "/notfound"
+    } else {
+      const {data} = await response.json();
+
+      dispatch({
+        type: "GET_USER",
+        payload: data
+      })
+    }
+
+    // setUsers(data);
+    // setLoading(false);
+
+  };
+
   //SET LOADING
   const setLoading = () => dispatch({type: "SET_LOADING", payload: []})
 
@@ -68,9 +96,11 @@ export const GithubProvider = ({ children }: GithubContextProps) => {
     <GithubContext.Provider
       value={{
         users: state.users,
+        user: state.user,
         loading: state.loading,
         searchUsers,
-        clearUsers
+        clearUsers,
+        getUser
       }}
     >
       {children}
